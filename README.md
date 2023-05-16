@@ -8,10 +8,6 @@ The Web Extensions library is also available as a NuGet package. To install it, 
 
 ## How to use
 
-### Classes overview
-
-```ResultHandler<T>``` class takes one generic type where T is the same type of ```Result<T>```. It extends ```Result<T, T2>``` being T2 ```ActionResult```.
-
 ### Handling results
 
 #### UseDefaultWebClientErrorHandler

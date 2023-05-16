@@ -1,5 +1,6 @@
 ﻿using EasyResults.Entities;
 using EasyResults.Enums;
+using EasyResults.Handlers;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EasyResults.WebExtensions.Tests;
@@ -16,10 +17,15 @@ public class UnhittedHandlerTests
     public void UseWebDefaultUnhittedHandler_ReturnsCorrectProblem_ForDifferentErrorStatusCodes(Status statusCode, int httpStatusCode)
     {
         // Arrange
-        var resultHandler = new ResultHandler()
-        .UseWebDefaultUnhittedHandler();
+        Result<string> resulthandling = new Result<string>(statusCode);
+        ActionResult result = new ContentResult();
+
+        ResultHandler resultHandler = new ResultHandler()
+        .UseWebDefaultUnhittedHandler(resulthandling, (r) => {
+            result = r;
+        });
         // Act
-        ActionResult result = resultHandler.HandleResult(new Result<string>(statusCode));
+        resultHandler.HandleResult(resulthandling);
 
         // Assert
         StatusCodeResult problem = Assert.IsType<StatusCodeResult>(result);

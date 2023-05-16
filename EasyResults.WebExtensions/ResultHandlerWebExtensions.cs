@@ -1,4 +1,7 @@
-﻿using EasyResults.Enums;
+﻿using EasyResults.Entities;
+using EasyResults.Enums;
+using EasyResults.Handlers;
+using EasyResults.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using System.Net;
@@ -15,13 +18,16 @@ public static class ResultHandlerWebExtensions
     /// </summary>
     /// <param name="executionHandler">The ResultHandler instance to which this extension method will be applied.</param>
     /// <param name="controller">Web controller</param>
+    /// <param name="result">Result that is being handled</param>
+    /// <param name="resultHandler">Lambda that allows you to handle the result</param>
     /// <returns>A ResultHandler with ActionResult as the type of return</returns>
-    public static ResultHandler UseDefaultWebClientErrorHandler(this ResultHandler executionHandler, ControllerBase controller)
+    public static ResultHandler UseDefaultWebClientErrorHandler(this ResultHandler executionHandler, ControllerBase controller, IResult result, Action<ActionResult> resultHandler)
     {
-        executionHandler.OnClientError((serviceResult) =>
+        executionHandler.OnClientError(() =>
         {
-            return controller.Problem(statusCode: MapToIntHttpStatusCode(serviceResult.Status),
-                                        title: serviceResult.Message);
+            ActionResult output = controller.Problem(statusCode: MapToIntHttpStatusCode(result.Status),
+                                        title: result.Message);
+            resultHandler(output);
         });
 
         return executionHandler;
@@ -32,13 +38,16 @@ public static class ResultHandlerWebExtensions
     /// </summary>
     /// <param name="executionHandler">The ResultHandler instance to which this extension method will be applied.</param>
     /// <param name="controller">Web controller</param>
+    /// <param name="result">Result that is being handled</param>
+    /// <param name="resultHandler">Lambda that allows you to handle the result</param>
     /// <returns>A ResultHandler with ActionResult as the type of return</returns>
-    public static ResultHandler UseDefaultWebServerErrorHandler(this ResultHandler executionHandler, ControllerBase controller)
+    public static ResultHandler UseDefaultWebServerErrorHandler(this ResultHandler executionHandler, ControllerBase controller, IResult result, Action<ActionResult> resultHandler)
     {
-        executionHandler.OnServerError((serviceResult) =>
+        executionHandler.OnServerError(() =>
         {
-            return controller.Problem(statusCode: MapToIntHttpStatusCode(serviceResult.Status),
-                                        title: serviceResult.Message);
+            ActionResult output = controller.Problem(statusCode: MapToIntHttpStatusCode(result.Status),
+                                        title: result.Message);
+            resultHandler(output);
         });
 
         return executionHandler;
@@ -49,11 +58,13 @@ public static class ResultHandlerWebExtensions
     /// </summary>
     /// <param name="executionHandler">The ResultHandler instance to which this extension method will be applied.</param>
     /// <param name="controller">Web controller</param>
+    /// <param name="result">Result that is being handled</param>
+    /// <param name="resultHandler">Lambda that allows you to handle the result</param>
     /// <returns>A ResultHandler with ActionResult as the type of return</returns>
-    public static ResultHandler UseWebDefaultErrorHandler(this ResultHandler executionHandler, ControllerBase controller)
+    public static ResultHandler UseWebDefaultErrorHandler(this ResultHandler executionHandler, ControllerBase controller, IResult result, Action<ActionResult> resultHandler)
     {
-        UseDefaultWebClientErrorHandler(executionHandler, controller);
-        UseDefaultWebServerErrorHandler(executionHandler, controller);
+        UseDefaultWebClientErrorHandler(executionHandler, controller, result, resultHandler);
+        UseDefaultWebServerErrorHandler(executionHandler, controller, result, resultHandler);
 
         return executionHandler;
     }
@@ -62,12 +73,15 @@ public static class ResultHandlerWebExtensions
     /// Extension method that will return the same status as the result when no other handler is hitted
     /// </summary>
     /// <param name="executionHandler">The ResultHandler instance to which this extension method will be applied.</param>
+    /// <param name="result">Result that is being handled</param>
+    /// <param name="resultHandler">Lambda that allows you to handle the result</param>
     /// <returns>A ResultHandler with ActionResult as the type of return</returns>
-    public static ResultHandler UseWebDefaultUnhittedHandler(this ResultHandler executionHandler)
+    public static ResultHandler UseWebDefaultUnhittedHandler(this ResultHandler executionHandler, IResult result, Action<ActionResult> resultHandler)
     {
-        executionHandler.OnUnhittedHandler((serviceResult) =>
+        executionHandler.OnUnhittedHandler(() =>
         {
-            return new StatusCodeResult(MapToIntHttpStatusCode(serviceResult.Status));
+            ActionResult output = new StatusCodeResult(MapToIntHttpStatusCode(result.Status));
+            resultHandler(output);
         });
 
         return executionHandler;
@@ -78,11 +92,12 @@ public static class ResultHandlerWebExtensions
     /// </summary>
     /// <param name="executionHandler">The ResultHandler instance to which this extension method will be applied.</param>
     /// <param name="controller">Web controller</param>
+    /// <param name="resultHandler">Lambda that allows you to handle the result</param>
     /// <returns>A ResultHandler with ActionResult as the type of return</returns>
-    public static ResultHandler UseWebDefaultsHandler(this ResultHandler executionHandler, ControllerBase controller)
+    public static ResultHandler UseWebDefaultsHandler(this ResultHandler executionHandler, ControllerBase controller, IResult result, Action<ActionResult> resultHandler)
     {
-        UseWebDefaultErrorHandler(executionHandler, controller);
-        UseWebDefaultUnhittedHandler(executionHandler);
+        UseWebDefaultErrorHandler(executionHandler, controller, result, resultHandler);
+        UseWebDefaultUnhittedHandler(executionHandler, result, resultHandler);
 
         return executionHandler;
     }

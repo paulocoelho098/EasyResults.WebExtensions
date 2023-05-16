@@ -1,5 +1,6 @@
 ﻿using EasyResults.Entities;
 using EasyResults.Enums;
+using EasyResults.Handlers;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EasyResults.WebExtensions.Tests;
@@ -16,11 +17,16 @@ public class DefaultErrorHandlerTests
     public void UseWebDefaultErrorHandler_ReturnsCorrectProblem_ForDifferentErrorStatusCodes(Status statusCode, string expectedTitle, int httpStatusCode)
     {
         // Arrange
+        Result<string> resultHandling = new Result<string>(statusCode, expectedTitle);
+        ActionResult result = new ContentResult();
+
         var resultHandler = new ResultHandler()
-            .UseWebDefaultErrorHandler(new TestController());
+            .UseWebDefaultErrorHandler(new TestController(), resultHandling, (r) => {
+                result = r;
+            });
 
         // Act
-        ActionResult result = resultHandler.HandleResult(new Result<string>(statusCode, expectedTitle));
+        resultHandler.HandleResult(resultHandling);
 
         // Assert
         ObjectResult problem = Assert.IsType<ObjectResult>(result);

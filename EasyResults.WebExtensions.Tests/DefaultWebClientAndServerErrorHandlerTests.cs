@@ -1,5 +1,7 @@
 using EasyResults.Entities;
 using EasyResults.Enums;
+using EasyResults.Handlers;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EasyResults.WebExtensions.Tests;
@@ -16,11 +18,16 @@ public class DefaultWebClientAndServerErrorHandlerTests
     public void UseDefaultWebClientErrorHandler_ReturnsCorrectProblem_ForDifferentErrorStatusCodes(Status statusCode, string expectedTitle, int httpStatusCode)
     {
         // Arrange
-        var resultHandler = new ResultHandler()
-        .UseDefaultWebClientErrorHandler(new TestController());
+        Result<string> resulthandling = new Result<string>(statusCode, expectedTitle);
+        ActionResult result = new ContentResult();
+
+        ResultHandler resultHandler = new ResultHandler()
+            .UseDefaultWebClientErrorHandler(new TestController(), resulthandling, (r) => {
+                result = r;
+            });
 
         // Act
-        ActionResult result = resultHandler.HandleResult(new Result<string>(statusCode, expectedTitle));
+        resultHandler.HandleResult(resulthandling);
 
         // Assert
         ObjectResult problem = Assert.IsType<ObjectResult>(result);
@@ -33,11 +40,16 @@ public class DefaultWebClientAndServerErrorHandlerTests
     public void UseDefaultWebServerErrorHandler_ReturnsCorrectProblem_ForInternalServerError()
     {
         // Arrange
+        Result<string> resulthandling = new Result<string>(Status.InternalServerError, "InternalServerError");
+        ActionResult result = new ContentResult();
+
         var resultHandler = new ResultHandler()
-        .UseDefaultWebServerErrorHandler(new TestController());
+        .UseDefaultWebServerErrorHandler(new TestController(), resulthandling, (r) => {
+            result = r;
+        });
 
         // Act
-        ActionResult result = resultHandler.HandleResult(new Result<string>(Status.InternalServerError, "InternalServerError"));
+        resultHandler.HandleResult(resulthandling);
 
         // Assert
         ObjectResult problem = Assert.IsType<ObjectResult>(result);
